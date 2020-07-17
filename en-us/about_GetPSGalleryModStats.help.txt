@@ -1,0 +1,40 @@
+﻿TOPIC
+	about_GetPSGalleryModStats
+
+SHORT DESCRIPTION
+	This will take a list of modules and retrieve stats from the PowerShell Gallery
+
+LONG DESCRIPTION
+	The purpose of this module will allow you to pass in an array or list of modules that you own on PowerShell Gallery
+	and have it report back all of the downloads in a sorted list based on downloads
+
+EXAMPLE 1
+    PS c:\> Get-PSGalleryDownloads PSUtil,PSFramework,PSServicePrincipal
+
+EXAMPLE 2
+    PS c:\> Get-PSGalleryDownloads PSUtil,PSFramework,PSServicePrincipal -EnableException
+    		Will throw terminating exception with errors and exit out
+
+NOTES
+	Passing objects via splatting or ValueFromPipeline need to be sent in to a Process block otherwise the default behaivor is to start that code path in the End block which will only pull the last item from a collection.
+
+	$ProgressPreference = 'SilentlyContinue' is being set to surpress progress bar output which degrades performance
+
+ADDITIONAL HELP
+	To learn more about jobs please see the extensive set of about files: Get-ChildItem -path $pshome\en-us\*jobs*
+
+	about_Jobs
+	about_Job_Details
+	about_Remote_Jobs
+	about_Scheduled_Jobs
+	about_Scheduled_Jobs_Advanced
+	about_Scheduled_Jobs_Basics
+	about_Scheduled_Jobs_Troubleshooting
+
+KEYWORDS
+	GetPSGalleryModStats
+
+
+
+
+
