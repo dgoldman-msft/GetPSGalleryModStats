@@ -43,7 +43,7 @@
     )
 
     Begin {
-        Write-PSFMessage -Level Host "Stating data aggragation from PowerShell Gallery"
+        Write-PSFMessage -Level Host "Gathering module download stats from PowerShell Gallery"
     }
     Process {
         $jobCounter = 0
@@ -53,7 +53,7 @@
         # Version check due to Inovke-WebRequest changing formats in PS 6 and above
         if($PSVersionTable.PSVersion.ToString() -gt "5.2")
         {
-            Stop-PSFFunction -Message "Incorrect PowerShell version" -ErrorRecord $_ -EnableException $EnableException
+            Stop-PSFFunction -Message "This version works on PowerShell version 5. A PowerShell v7 is in the works." -ErrorRecord $_ -EnableException $EnableException
             return
         }
         # Check for existing old jobs and remove them
