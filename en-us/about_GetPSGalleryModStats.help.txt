@@ -13,7 +13,6 @@ EXAMPLE 1
 
 EXAMPLE 2
     PS c:\> Get-PSGalleryDownloads PSUtil,PSFramework,PSServicePrincipal -EnableException
-    		Will throw terminating exception with errors and exit out
 
 NOTES
 	Passing objects via splatting or ValueFromPipeline need to be sent in to a Process block otherwise the default behaivor is to start that code path in the End block which will only pull the last item from a collection.

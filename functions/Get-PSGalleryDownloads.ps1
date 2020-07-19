@@ -1,25 +1,27 @@
 ﻿Function Get-PSGalleryDownloads {
     <#
-	    .Synopsis
+        .SYNOPSIS
             Cmdlet for making web requests to PowerShell Gallery
 
-	    .Description
-            This will take a list of modules and retrieve stats from the PowerShell Gallery
+        .DESCRIPTION
+            This will take a list of modules and retrieve current download statistics from the PowerShell Gallery
 
-        .Example
+        .PARAMETER ModuleList
+            List of modules to pull download statistics for
+
+        .PARAMETER EnableException
+            Disables user-friendly warnings and enables the throwing of exceptions. This is less user friendly, but allows catching exceptions in calling scripts.
+
+        .EXAMPLE
             PS c:\> Get-PSGalleryDownloads PSUtil,PSFramework,PSServicePrincipal
 
-        .Example
+        .EXAMPLE
             PS c:\> Get-PSGalleryDownloads PSUtil,PSFramework,PSServicePrincipal -EnableException
-                Will throw terminating exception with errors and exit out
 
-        .Notes
-            Passing objects via splatting or ValueFromPipeline need to be sent in to a Process block otherwise the default behaivor
-            is to start that code path in the End block which will only pull the last item from a collection.
-            This function will look for all old jobs that have been ran and remove them leaving other jobs that do not have anything
-            to do with this module.
+        .NOTES
+            This version only works on PowerShell version 5 at this time due to object changes in Invoke-WebRequest between Windows PowerShell and PowerShell core
 
-            $ProgressPreference = 'SilentlyContinue' is being set to surpress progress bar output which degrades performance
+            Line 53: $ProgressPreference = 'SilentlyContinue' is being set to surpress progress bar output which degrades performance
 
             To learn more about jobs please see the extensive set of about files: Get-ChildItem -path $pshome\en-us\*jobs*
 
@@ -51,8 +53,7 @@
         $ProgressPreference = 'SilentlyContinue'
 
         # Version check due to Inovke-WebRequest changing formats in PS 6 and above
-        if($PSVersionTable.PSVersion.ToString() -gt "5.2")
-        {
+        if ($PSVersionTable.PSVersion.ToString() -gt "5.2") {
             Stop-PSFFunction -Message "This version works on PowerShell version 5. A PowerShell v7 is in the works." -ErrorRecord $_ -EnableException $EnableException
             return
         }
@@ -70,8 +71,8 @@
             $uri = "https://www.powershellgallery.com/packages/$($module)"
             Write-PSFMessage -Level Verbose "Starting background job to get downloads stats for module: {0}" -StringValues $module
             try {
-                    Start-Job -Name $module -ScriptBlock { param($uri) Invoke-WebRequest -Uri $uri } -ArgumentList $uri > $null
-                    $jobCounter ++
+                Start-Job -Name $module -ScriptBlock { param($uri) Invoke-WebRequest -Uri $uri } -ArgumentList $uri > $null
+                $jobCounter ++
             }
             catch {
                 Stop-PSFFunction -Message "Error starrting background job!" -ErrorRecord $_
@@ -84,17 +85,17 @@
                     $wr = $runningJob | Receive-Job -Keep
 
                     $customJob = [PSCustomObject]@{
-                        PSTypeName          = 'PowershellUtilities.PSGalleryInfo'
-                        QueriedOn           = (Get-Date -UFormat "%D %r")
-                        Module              = $runningJob.Name
-                        Version             = ($wr.AllElements[90].outerText -split "\s+")[6]
-                        Downloads           = ($wr.AllElements[90].outerText -split "\s+")[1]
-                        LastPublished       = ($wr.AllElements[90].outerText -split "\s+")[10]
-                        Owner               = ($wr.Links.InnerText[21] -replace '\s+', '')
-                        ProjectSite         = $wr.AllElements[108].href
-                        Server              = $wr.Headers.Server
-                        StatusCode          = $wr.StatusCode
-                        StatusDescription   = $wr.StatusDescription
+                        PSTypeName        = 'PowershellUtilities.PSGalleryInfo'
+                        QueriedOn         = (Get-Date -UFormat "%D %r")
+                        Module            = $runningJob.Name
+                        Version           = ($wr.AllElements[90].outerText -split "\s+")[6]
+                        Downloads         = ($wr.AllElements[90].outerText -split "\s+")[1]
+                        LastPublished     = ($wr.AllElements[90].outerText -split "\s+")[10]
+                        Owner             = ($wr.Links.InnerText[21] -replace '\s+', '')
+                        ProjectSite       = $wr.AllElements[108].href
+                        Server            = $wr.Headers.Server
+                        StatusCode        = $wr.StatusCode
+                        StatusDescription = $wr.StatusDescription
                     }
 
                     [void]$Objects.add($customJob)
