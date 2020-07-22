@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-16"?>
 <Configuration>
-	<ViewDefinitions>
-		<!-- GetPSGalleryModStats.Format.PSGalleryInfo -->
+    <ViewDefinitions>
+        <!-- GetPSGalleryModStats.Format.PSGalleryInfo -->
         <View>
             <Name>GetPSGalleryModStats.PSGalleryInfo</Name>
             <ViewSelectedBy>
@@ -13,7 +13,7 @@
                     <TableColumnHeader>
                         <Alignment>Center</Alignment>
                     </TableColumnHeader>
-                     <TableColumnHeader>
+                    <TableColumnHeader>
                         <Alignment>Center</Alignment>
                     </TableColumnHeader>
                     <TableColumnHeader>
@@ -33,7 +33,7 @@
                     <TableRowEntry>
                         <TableColumnItems>
                             <TableColumnItem>
-                                <PropertyName>Queried On</PropertyName>
+                                <PropertyName>Search Date</PropertyName>
                             </TableColumnItem>
                             <TableColumnItem>
                                 <PropertyName>Module</PropertyName>
@@ -55,5 +55,5 @@
                 </TableRowEntries>
             </TableControl>
         </View>
-	</ViewDefinitions>
+    </ViewDefinitions>
 </Configuration>

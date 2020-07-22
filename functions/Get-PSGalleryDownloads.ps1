@@ -85,17 +85,18 @@
                     $wr = $runningJob | Receive-Job -Keep
 
                     $customJob = [PSCustomObject]@{
-                        PSTypeName        = 'PowershellUtilities.PSGalleryInfo'
-                        QueriedOn         = (Get-Date -UFormat "%D %r")
-                        Module            = $runningJob.Name
-                        Version           = ($wr.AllElements[90].outerText -split "\s+")[6]
-                        Downloads         = ($wr.AllElements[90].outerText -split "\s+")[1]
-                        LastPublished     = ($wr.AllElements[90].outerText -split "\s+")[10]
-                        Owner             = ($wr.Links.InnerText[21] -replace '\s+', '')
-                        ProjectSite       = $wr.AllElements[108].href
-                        Server            = $wr.Headers.Server
-                        StatusCode        = $wr.StatusCode
-                        StatusDescription = $wr.StatusDescription
+                        PSTypeName           = 'GetPSGalleryModStats.PSGalleryInfo'
+                        "Search Date"        = (Get-Date -UFormat "%D - %r")
+                        Module               = $runningJob.Name
+                        Version              = ($wr.AllElements[16].outerText -split "\s+")[5]
+                        Downloads            = ($wr.AllElements[90].InnerText -split "\s+")[0]
+                        "Last Published"     = ($wr.AllElements[98].InnerText -split "\s+")[0]
+                        Owner                = ($wr.Links[21].Title)
+                        "Project Site"       = $wr.Links[8].href
+                        "License Info"       = $wr.Links[9].href
+                        Server               = $wr.Headers.Server
+                        "Status Code"        = $wr.StatusCode
+                        "Status Description" = $wr.StatusDescription
                     }
 
                     [void]$Objects.add($customJob)
