@@ -3,7 +3,7 @@
 	RootModule = 'GetPSGalleryModStats.psm1'
 
 	# Version number of this module.
-	ModuleVersion = '1.0.1'
+	ModuleVersion = '1.0.2'
 
 	# ID used to uniquely identify this module
 	GUID = 'ce0fec06-efc3-46bd-b4ce-a755b21f47bb'
