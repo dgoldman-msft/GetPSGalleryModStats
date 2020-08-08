@@ -50,9 +50,10 @@
 	VariablesToExport = ''
 
 	# Aliases to export from this module
-	AliasesToExport = ''
+	AliasesToExport = @(
+		'gpsmod'
+	)
 
-	# List of all modules packaged with this module
 	ModuleList = @()
 
 	# List of all files packaged with this module

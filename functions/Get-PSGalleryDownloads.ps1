@@ -36,6 +36,7 @@
 
     [CmdletBinding(DefaultParameterSetName = "Default")]
     param(
+        [Alias('gpsmod')]
         [parameter(Mandatory = $True, ValueFromPipeline = $True)]
         [PSObject[]]
         $ModuleList,
@@ -58,6 +59,7 @@
             return
         }
         # Check for existing old jobs and remove them
+        Write-PSFMessage -Level Verbose "Scanning for orphaned jobs from prior run"
         foreach ($job in (Get-Job | Select-Object Name, State, Id)) {
             if ($ModuleList.Contains($job.Name)) {
                 if ($job.State -eq 'Completed' -or $job.State -eq 'Falied') {
@@ -68,20 +70,22 @@
         }
 
         foreach ($module in $ModuleList) {
+            Write-PSFMessage -Level Verbose "Queueing request for module: {0}" -StringValues $module
             $uri = "https://www.powershellgallery.com/packages/$($module)"
-            Write-PSFMessage -Level Verbose "Starting background job to get downloads stats for module: {0}" -StringValues $module
+            Write-PSFMessage -Level Verbose "Starting background job fetch data"
             try {
                 Start-Job -Name $module -ScriptBlock { param($uri) Invoke-WebRequest -Uri $uri } -ArgumentList $uri > $null
                 $jobCounter ++
             }
             catch {
-                Stop-PSFFunction -Message "Error starrting background job!" -ErrorRecord $_
+                Stop-PSFFunction -Message "Error with background job!" -ErrorRecord $_
             }
         }
 
         while ($jobCounter -gt 0) {
             foreach ($RunningJob in (Get-Job)) {
                 if ($runningJob.State -eq 'Completed') {
+                    Write-PSFMessage -Level Verbose "Retrieving job information for job: {0}" -StringValues $RunningJob.Id
                     $wr = $runningJob | Receive-Job -Keep
 
                     $customJob = [PSCustomObject]@{
@@ -89,8 +93,8 @@
                         "Search Date"        = (Get-Date -UFormat "%D - %r")
                         Module               = $runningJob.Name
                         Version              = ($wr.AllElements[16].outerText -split "\s+")[5]
-                        Downloads            = ($wr.AllElements[90].InnerText -split "\s+")[0]
-                        "Last Published"     = ($wr.AllElements[98].InnerText -split "\s+")[0]
+                        Downloads            = ($wr.AllElements[90].InnerText -split "\s+")[1]
+                        "Last Published"     = ($wr.AllElements[90].InnerText -split "\s+")[10]
                         Owner                = ($wr.Links[21].Title)
                         "Project Site"       = $wr.Links[8].href
                         "License Info"       = $wr.Links[9].href
@@ -113,7 +117,7 @@
         }
 
         # Produce output object backed by custom view [GetPSGalleryModStats.Format.PSGalleryInfo]
-        Write-PSFMessage -Level Verbose "Calculating data and production object object"
+        Write-PSFMessage -Level Verbose "Calculating stats..."
         $Objects | Sort-Object Downloads -Descending
     }
 }
