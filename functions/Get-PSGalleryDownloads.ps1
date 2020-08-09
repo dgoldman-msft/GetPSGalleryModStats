@@ -37,18 +37,25 @@
     [CmdletBinding(DefaultParameterSetName = "Default")]
     param(
         [Alias('gpsmod')]
-        [parameter(Mandatory = $True, ValueFromPipeline = $True)]
+        [parameter(ValueFromPipeline = $True)]
         [PSObject[]]
-        $ModuleList,
+        $ModuleList = (Get-PSFConfigValue -FullName 'GetPSGalleryModStats.Default.Module'),
 
         [switch]
         $EnableException
     )
 
     Begin {
-        Write-PSFMessage -Level Host "Gathering module download stats from PowerShell Gallery"
+        Write-PSFMessage -Level Verbose "Initalizing searching request to PowerShell Gallery"
     }
     Process {
+
+        if(-NOT $ModuleList)
+        {
+            Write-PSFMessage -Level Host "No module passed in or set in module configuration settings."
+            return
+        }
+
         $jobCounter = 0
         [System.Collections.ArrayList] $Objects = @()
         $ProgressPreference = 'SilentlyContinue'
@@ -78,7 +85,7 @@
                 $jobCounter ++
             }
             catch {
-                Stop-PSFFunction -Message "Error with background job!" -ErrorRecord $_
+                Stop-PSFFunction -Message "Job Error" -ErrorRecord $_
             }
         }
 
