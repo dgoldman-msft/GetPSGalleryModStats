@@ -1,10 +1,10 @@
 ﻿Function Get-PSGalleryDownloads {
     <#
         .SYNOPSIS
-            Cmdlet for making web requests to PowerShell Gallery
+            Calls PowerShell Gallery to get module statistics
 
         .DESCRIPTION
-            This will take a list of modules and retrieve current download statistics from the PowerShell Gallery
+            This function will take a list of modules and retrieve current download statistics from the PowerShell Gallery
 
         .PARAMETER ModuleList
             List of modules to pull download statistics for
@@ -13,10 +13,14 @@
             Disables user-friendly warnings and enables the throwing of exceptions. This is less user friendly, but allows catching exceptions in calling scripts.
 
         .EXAMPLE
-            PS c:\> Get-PSGalleryDownloads PSUtil,PSFramework,PSServicePrincipal
+            PS C:\> Get-PSGalleryDownloads PSUtil,PSFramework,PSServicePrincipal
+
+            Returns stats for the following modules PSUtil,PSFramework,PSServicePrincipal
 
         .EXAMPLE
-            PS c:\> Get-PSGalleryDownloads PSUtil,PSFramework,PSServicePrincipal -EnableException
+            PS C:\> Get-PSGalleryDownloads PSUtil,PSFramework,PSServicePrincipal -EnableException
+
+            Returns stats for the following modules PSUtil,PSFramework,PSServicePrincipal and if fails will report all errors
 
         .NOTES
             This version only works on PowerShell version 5 at this time due to object changes in Invoke-WebRequest between Windows PowerShell and PowerShell core
@@ -34,9 +38,10 @@
             about_Scheduled_Jobs_Troubleshooting
     #>
 
+    [OutputType('PowershellUtilities.Jobs')]
+    [Alias('pgstat')]
     [CmdletBinding(DefaultParameterSetName = "Default")]
     param(
-        [Alias('gpsmod')]
         [parameter(ValueFromPipeline = $True)]
         [PSObject[]]
         $ModuleList = (Get-PSFConfigValue -FullName 'GetPSGalleryModStats.Default.Module'),
@@ -46,62 +51,62 @@
     )
 
     Begin {
-        Write-PSFMessage -Level Verbose "Initalizing searching request to PowerShell Gallery"
+        Write-PSFMessage -String 'Get-PSGalleryDownloads.Message1'
     }
     Process {
 
-        if(-NOT $ModuleList)
-        {
-            Write-PSFMessage -Level Host "No module passed in or set in module configuration settings."
+        if (-NOT $ModuleList) {
+            Write-PSFMessage -String 'Get-PSGalleryDownloads.Message2'
             return
         }
 
         $jobCounter = 0
         [System.Collections.ArrayList] $Objects = @()
-        $ProgressPreference = 'SilentlyContinue'
+        $ProgressPreference = 'SilentlyContinue' # Added for performance since we dont display the progress bar
 
         # Version check due to Inovke-WebRequest changing formats in PS 6 and above
         if ($PSVersionTable.PSVersion.ToString() -gt "5.2") {
-            Stop-PSFFunction -Message "This version works on PowerShell version 5. A PowerShell v7 is in the works." -ErrorRecord $_ -EnableException $EnableException
+            Stop-PSFFunction -String 'Get-PSGalleryDownloads.Message3' -ErrorRecord $_ -EnableException $EnableException
             return
         }
         # Check for existing old jobs and remove them
-        Write-PSFMessage -Level Verbose "Scanning for orphaned jobs from prior run"
+        Write-PSFMessage -String 'Get-PSGalleryDownloads.Message4'
         foreach ($job in (Get-Job | Select-Object Name, State, Id)) {
             if ($ModuleList.Contains($job.Name)) {
                 if ($job.State -eq 'Completed' -or $job.State -eq 'Falied') {
-                    Write-PSFMessage -Level Verbose "Removing old job: {0} Id: {1}" -StringValues $job.Name, $job.Id
+                    Write-PSFMessage -String 'Get-PSGalleryDownloads.Message5' -StringValues $job.Name, $job.Id
                     Remove-Job -Id $job.Id
                 }
             }
         }
 
         foreach ($module in $ModuleList) {
-            Write-PSFMessage -Level Verbose "Queueing request for module: {0}" -StringValues $module
+            Write-PSFMessage -String 'Get-PSGalleryDownloads.Message6' -StringValues $module
             $uri = "https://www.powershellgallery.com/packages/$($module)"
-            Write-PSFMessage -Level Verbose "Starting background job fetch data"
+            Write-PSFMessage -String 'Get-PSGalleryDownloads.Message7'
             try {
                 Start-Job -Name $module -ScriptBlock { param($uri) Invoke-WebRequest -Uri $uri } -ArgumentList $uri > $null
                 $jobCounter ++
             }
             catch {
-                Stop-PSFFunction -Message "Job Error" -ErrorRecord $_
+                Stop-PSFFunction -String 'Get-PSGalleryDownloads.Message8' -ErrorRecord $_
             }
         }
 
         while ($jobCounter -gt 0) {
             foreach ($RunningJob in (Get-Job)) {
                 if ($runningJob.State -eq 'Completed') {
-                    Write-PSFMessage -Level Verbose "Retrieving job information for job: {0}" -StringValues $RunningJob.Id
+                    Write-PSFMessage -String 'Get-PSGalleryDownloads.Message9' -StringValues $RunningJob.Id
                     $wr = $runningJob | Receive-Job -Keep
 
                     $customJob = [PSCustomObject]@{
-                        PSTypeName           = 'GetPSGalleryModStats.PSGalleryInfo'
+                        PSTypeName           = 'PowershellUtilities.PSGalleryInfo'
                         "Search Date"        = (Get-Date -UFormat "%D - %r")
                         Module               = $runningJob.Name
                         Version              = ($wr.AllElements[16].outerText -split "\s+")[5]
-                        Downloads            = ($wr.AllElements[90].InnerText -split "\s+")[1]
-                        "Last Published"     = ($wr.AllElements[90].InnerText -split "\s+")[10]
+                        Downloads            = ($wr.AllElements[90].InnerText -split "\s+")[3]
+                        "Total Downloads"    = ($wr.AllElements[90].InnerText -split "\s+")[1]
+                        "Last Published"     = ($wr.AllElements[103].InnerText -split "\s+")[0]
                         Owner                = ($wr.Links[21].Title)
                         "Project Site"       = $wr.Links[8].href
                         "License Info"       = $wr.Links[9].href
@@ -112,19 +117,19 @@
 
                     [void]$Objects.add($customJob)
                     $jobCounter --
-                    Write-PSFMessage -Level Verbose "Removing completed job: {0}" -StringValues $runningJob.Id
+                    Write-PSFMessage -String 'Get-PSGalleryDownloads.Message10' -StringValues $runningJob.Id
                     Remove-Job -Id $runningJob.Id
                 }
                 if ($runningJob.State -eq 'Failed') {
-                    $jobCounter --                   
-                    Write-PSFMessage -Level Verbose "Removing falied job: {0}" -StringValues $runningJob.Id
+                    $jobCounter --
+                    Write-PSFMessage -String 'Get-PSGalleryDownloads.Message11' -StringValues $runningJob.Id
                     Remove-Job -Id $runningJob.Id
                 }
             }
         }
 
         # Produce output object backed by custom view [GetPSGalleryModStats.Format.PSGalleryInfo]
-        Write-PSFMessage -Level Verbose "Calculating stats..."
+        Write-PSFMessage -String 'Get-PSGalleryDownloads.Message12'
         $Objects | Sort-Object Downloads -Descending
     }
 }
