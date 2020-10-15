@@ -44,7 +44,7 @@
     param(
         [parameter(ValueFromPipeline = $True)]
         [PSObject[]]
-        $ModuleList = (Get-PSFConfigValue -FullName 'GetPSGalleryModStats.Default.Module'),
+        $ModuleList,
 
         [switch]
         $EnableException
