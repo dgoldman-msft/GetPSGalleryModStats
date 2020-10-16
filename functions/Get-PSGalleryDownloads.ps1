@@ -100,7 +100,7 @@
                     $wr = $runningJob | Receive-Job -Keep
 
                     $customJob = [PSCustomObject]@{
-                        PSTypeName           = 'PowershellUtilities.PSGalleryInfo'
+                        PSTypeName           = 'GetPSGalleryModStats.PSGalleryInfo'
                         "Search Date"        = (Get-Date -UFormat "%D - %r")
                         Module               = $runningJob.Name
                         Version              = ($wr.AllElements[16].outerText -split "\s+")[5]
