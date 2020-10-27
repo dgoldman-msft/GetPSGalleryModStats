@@ -38,13 +38,13 @@
             about_Scheduled_Jobs_Troubleshooting
     #>
 
-    [OutputType('PowershellUtilities.Jobs')]
+    [OutputType('GetPSGalleryModStats.Jobs')]
     [Alias('pgstat')]
     [CmdletBinding(DefaultParameterSetName = "Default")]
     param(
         [parameter(ValueFromPipeline = $True)]
         [PSObject[]]
-        $ModuleList,
+        $ModuleList = (Get-PSFConfigValue -FullName 'GetPSGalleryModStats.Default.Module'),
 
         [switch]
         $EnableException
@@ -104,9 +104,9 @@
                         "Search Date"        = (Get-Date -UFormat "%D - %r")
                         Module               = $runningJob.Name
                         Version              = ($wr.AllElements[16].outerText -split "\s+")[5]
-                        Downloads            = ($wr.AllElements[90].InnerText -split "\s+")[3]
-                        "Total Downloads"    = ($wr.AllElements[90].InnerText -split "\s+")[1]
-                        "Last Published"     = ($wr.AllElements[103].InnerText -split "\s+")[0]
+                        Downloads            = ($wr.AllElements[93].InnerText -split "\s+")[0]
+                        "Total Downloads"    = ($wr.AllElements[90].InnerText -split "\s+")[0]
+                        "Last Published"     = ($wr.AllElements[98].InnerText -split "\s+")[0]
                         Owner                = ($wr.Links[21].Title)
                         "Project Site"       = $wr.Links[8].href
                         "License Info"       = $wr.Links[9].href
